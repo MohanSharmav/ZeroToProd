@@ -19,7 +19,7 @@ fi
 
 DB_USER=${POSTGRES_USER:=mohanvenkatesh}
 DB_PASSWORD="${POSTGRES_PASSWORD:=Msvmsd183!}"
-DB_NAME="${POSTGRES_DB:=newsletter}"
+DB_NAME="${POSTGRES_DB:=mohan}"
 DB_PORT="${POSTGRES_PORT:=5432}"
 DB_HOST="${POSTGRES_HOST:=localhost}"
 

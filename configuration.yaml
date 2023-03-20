@@ -5,4 +5,4 @@ database:
   port: 5432
   username: "mohanvenkatesh"
   password: "Msvmsd183!"
-  database_name: "newsletter"
+  database_name: "mohan"
