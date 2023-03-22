@@ -113,14 +113,14 @@ async fn subscribe_returns_a_400_when_data_is_missing(){
 
 pub async fn configure_database(config:&DatabaseSettings) -> PgPool{
     let mut connection = PgConnection::connect(
-        &config.connection_string_without_db()
+        &config.without_db()
     )
         .await
         .expect("Failed to connect Postgres");
     connection.execute(format!(r#"CREATE DATABASE"{}";"#,config.database_name).as_str())
         .await
         .expect("Failed to create database.");
-    let connection_pool = PgPool::connect(&config.connection_string())
+    let connection_pool = PgPool::connect_with(config.with_db())
         .await
         .expect("Failed to connect to Postgres");
     sqlx::migrate!("./migrations")//is the same macro used by sqlx-cli when executing sqlx migrate run - no need to throw bash scripts into the mix to achieve the same result

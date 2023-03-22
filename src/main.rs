@@ -38,7 +38,7 @@ async fn main() -> Result<(), std::io::Error> {
     let connection_pool= PgPoolOptions::new()
         .acquire_timeout(std::time::Duration::from_secs(2))
         .connect_lazy(
-            &configuration.database.connection_string()
+            .configuration.database.with_db();
         )
         .expect("Failed to connect to database postrges");
     // let connection_pool = PgPool::connect_lazy(

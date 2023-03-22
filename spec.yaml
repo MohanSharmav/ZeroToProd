@@ -37,6 +37,22 @@ services:
     # All incoming requests should be routed to our app
     routes:
       - path: /
+    envs:
+    - key: APP_DATABASE__USERNAME
+      scope: RUN_TIME
+      value: ${mohan.USERNAME}
+    - key: APP_DATABASE__PASSWORD
+      scope: RUN_TIME
+      value: ${mohan.PASSWORD}
+    - key: APP_DATABASE__HOST
+      scope: RUN_TIME
+      value: ${mohan.HOSTNAME}
+    - key: APP_DATABASE__PORT
+      scope: RUN_TIME
+      value: ${mohan.PORT}
+    - key: APP_DATABASE__DATABASE_NAME
+      scope: RUN_TIME
+      value: ${mohan.DATABASE}
 
 databases:
       # PG = Postgres
