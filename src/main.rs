@@ -2,7 +2,7 @@ use actix_web::{web, App, HttpRequest, HttpServer, Responder, HttpResponse};
 //use ZeroToProd::run;
 use tracing_log::LogTracer;
 use ZeroToProd::startup::run;
-use sqlx::postgres::PgPool;
+use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::net::TcpListener;
 //use env_logger::Env;
 use ZeroToProd::telemetry::{get_subscriber, init_subscriber};
@@ -26,23 +26,33 @@ async fn main() -> Result<(), std::io::Error> {
     // )
     //     .expect("Failed to create Postgres connection pool.");
 
-    let subscriber = get_subscriber("ZeroToProd".into(),"info".into(),std::io::stdout);
+    let subscriber = get_subscriber(
+        "ZeroToProd".into(),"info".into(),std::io::stdout
+    );
     init_subscriber(subscriber);
 
 
 
     let configuration = get_configuration().expect("Failed to read configuration.");
-    let connection_pool = PgPool::connect_lazy(
-        &configuration.database.connection_string()
 
-        //configuration
-    )
-        .expect("Failed to create Postgres connection pool.");
+    let connection_pool= PgPoolOptions::new()
+        .acquire_timeout(std::time::Duration::from_secs(2))
+        .connect_lazy(
+            &configuration.database.connection_string()
+        )
+        .expect("Failed to connect to database postrges");
+    // let connection_pool = PgPool::connect_lazy(
+    //     &configuration.database.connection_string()
+    //
+    //     //configuration
+    // )
+    //     .expect("Failed to create Postgres connection pool.");
 
-    let address = format!("{}:{}",configuration.application.host,configuration.application.port);
+    let address = format!(
+        "{}:{}",
+        configuration.application.host,configuration.application.port);
     let listener = TcpListener::bind(address)?;//TcpListener
-    //Ok(())
-    //println!("in main");
+
     run(listener,connection_pool)?.await?;
     Ok(())//await, connection_pool
 }
