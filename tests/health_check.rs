@@ -11,7 +11,7 @@ use ZeroToProd::startup::run;
 
 
 static TRACING: Lazy<()> = Lazy::new(|| {
-    let subscriber = get_subscriber("test".into(),"debug".into());
+    let subscriber = get_subscriber("test".into(), "debug".into(),std::io::stdout);
     init_subscriber(subscriber);
 });
 

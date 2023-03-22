@@ -1,3 +1,4 @@
+use std::io::Stdout;
 use tracing::subscriber::set_global_default;
 use tracing::Subscriber;
 use tracing_bunyan_formatter::{BunyanFormattingLayer,JsonStorageLayer};
@@ -6,7 +7,8 @@ use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
 
 pub fn get_subscriber(
     name: String,
-    env_filter: String
+    env_filter: String,
+    x: fn() -> Stdout
 ) -> impl Subscriber + Send + Sync {
     let env_filter = EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| EnvFilter::new(env_filter));
