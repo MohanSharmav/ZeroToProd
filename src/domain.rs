@@ -1,10 +1,14 @@
 use unicode_segmentation::UnicodeSegmentation;
 
+
 pub struct NewSubscriber{
     pub email:String,
     pub name: SubscriberName,
 }
-pub struct SubscriberName(String);
+
+
+
+pub struct SubscriberName(pub(crate) String);
 
 impl SubscriberName {
     pub fn parse(s: String) -> SubscriberName {
@@ -24,5 +28,11 @@ impl SubscriberName {
             Self(s)
         }
 
+    }
+}
+
+impl AsRef<str> for SubscriberName{
+    fn as_ref(&self) -> &str {
+        &self.0
     }
 }

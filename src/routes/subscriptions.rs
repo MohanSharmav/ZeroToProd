@@ -86,7 +86,7 @@ pub fn is_valid_name(s: &str) -> bool{
     !(is_empty_or_whitespace||is_too_long||contains_forbidden_characters)
 }
 
-
+#[tracing::instrument([...])]
 pub async fn insert_subscriber(
     pool: &PgPool,
     new_subscriber: &NewSubscriber,
@@ -98,7 +98,7 @@ pub async fn insert_subscriber(
         "#,
         Uuid::new_v4(),
         new_subscriber.email,
-        new_subscriber.name,
+        new_subscriber.name.as_ref(),
         Utc::now()
     )
         .execute(pool)
@@ -110,3 +110,8 @@ pub async fn insert_subscriber(
     Ok(())
 }
 
+impl SubscriberName{
+    pub fn inner_ref(&self) ->&str{
+        &self.0
+    }
+}
