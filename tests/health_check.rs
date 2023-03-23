@@ -112,7 +112,7 @@ async fn subscribe_returns_a_400_when_data_is_missing(){
 }
 
 pub async fn configure_database(config:&DatabaseSettings) -> PgPool{
-    let mut connection = PgConnection::connect(
+    let mut connection = PgConnection::connect_with(
         &config.without_db()
     )
         .await

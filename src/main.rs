@@ -19,7 +19,7 @@ async fn greet(req: HttpRequest) -> impl Responder {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), std::io::Error> {
+ fn main() -> Result<(), std::io::Error> {
 
     // let connection_pool = PgPool::connect_lazy(
     //     &configuration.database.connection_string().expose_secret()
@@ -37,10 +37,7 @@ async fn main() -> Result<(), std::io::Error> {
 
     let connection_pool= PgPoolOptions::new()
         .acquire_timeout(std::time::Duration::from_secs(2))
-        .connect_lazy(
-            .configuration.database.with_db();
-        )
-        .expect("Failed to connect to database postrges");
+        .connect_lazy_with(configuration.database.with_db());
     // let connection_pool = PgPool::connect_lazy(
     //     &configuration.database.connection_string()
     //
@@ -53,7 +50,7 @@ async fn main() -> Result<(), std::io::Error> {
         configuration.application.host,configuration.application.port);
     let listener = TcpListener::bind(address)?;//TcpListener
 
-    run(listener,connection_pool)?.await?;
+    run(listener,connection_pool)?;
     Ok(())//await, connection_pool
 }
 
