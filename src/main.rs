@@ -19,7 +19,7 @@ async fn greet(req: HttpRequest) -> impl Responder {
 }
 
 #[tokio::main]
- fn main() -> Result<(), std::io::Error> {
+async fn main() -> Result<(), std::io::Error> {
 
     // let connection_pool = PgPool::connect_lazy(
     //     &configuration.database.connection_string().expose_secret()
@@ -50,7 +50,7 @@ async fn greet(req: HttpRequest) -> impl Responder {
         configuration.application.host,configuration.application.port);
     let listener = TcpListener::bind(address)?;//TcpListener
 
-    run(listener,connection_pool)?;
+    run(listener,connection_pool)?.await?;
     Ok(())//await, connection_pool
 }
 
