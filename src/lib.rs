@@ -3,6 +3,9 @@ pub mod configuration;
 pub mod routes;
 pub mod startup;
 pub mod telemetry;
+pub mod domain;
+
+
 // pub trait Log: Sync + Send {
 //     fn enabled(&self,metadata:&Metadata) -> bool;
 //     //fn log(&self, record: &Record);
