@@ -3,6 +3,7 @@ use sqlx::{ PgPool};
 use tracing::Instrument;
 use sqlx::types::uuid;
 use chrono::Utc;
+use unicode_segmentation::UnicodeSegmentation;
 use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
@@ -11,7 +12,22 @@ pub struct FormData {
     name: String
 }
 
-pub async fn subscribe(form: web::Form<FormData>,pool:web::Data<PgPool>,) -> HttpResponse{
+
+
+pub async fn subscribe(
+    form: web::Form<FormData>,pool:web::Data<PgPool>,
+) -> HttpResponse
+{
+    if !is_valid_name(&form.name) {
+        return HttpResponse::BadRequest().finish()
+    }
+
+    match insert_subscriber(&pool, &form).await{
+        Ok(_)=> HttpResponse::Ok().finish(),
+        Err(_)=> HttpResponse::InternalServerError().finish(),
+    };
+
+
     let request_id = Uuid::new_v4();//Uuid is used to generate a random id
     let request_span = tracing::info_span!(
         "Adding a new subscriber.",//tracing when a new subscriber is added.
@@ -19,10 +35,6 @@ pub async fn subscribe(form: web::Form<FormData>,pool:web::Data<PgPool>,) -> Htt
         subscriber_email = %form.email, //e-mail of the subscriber in the log trace
         subscriber_name = %form.name//name of the subscriber in the log trace
 
-        // &a-->lj.23999909887,9.99898989,3.45888890,2.788889988=>{
-        //     &b,&b,&v,&c(0.999,0.88,0.898,0.8876)
-        //     #90099998.kjjj99999&88
-        // }
     );
     //let_request_span_guard = request_span.enter();
     let query_span = tracing::info_span!("Saving new subscriber details in the database");
@@ -48,4 +60,44 @@ pub async fn subscribe(form: web::Form<FormData>,pool:web::Data<PgPool>,) -> Htt
             HttpResponse::InternalServerError().finish()
         }
     }
+}
+
+
+pub fn is_valid_name(s: &str) -> bool{
+    let is_empty_or_whitespace = s.trim().is_empty();
+
+    let is_too_long= s.graphemes(true).count()>256;
+
+    let forbidden_characters = ['/', '(', ')', '"', '<', '>', '\\', '{', '}'];
+
+    let contains_forbidden_characters = s
+        .chars()
+        .any(|g|forbidden_characters.contains(&g));
+
+
+    !(is_empty_or_whitespace||is_too_long||contains_forbidden_characters)
+}
+
+
+pub async fn insert_subscriber(
+    pool: &PgPool,
+    form: &FormData
+)-> Result<(),sqlx::Error>{
+    sqlx::query!(
+        r#"
+    INSERT INTO subscriptions(id,email,name,subscribed_at)
+    values($1,$2,$3,$4)
+        "#,
+        Uuid::new_v4(),
+        form.email,
+        form.name,
+        Utc::now()
+    )
+        .execute(pool)
+        .await
+        .map_err(|e|{
+            tracing::error!("failed to execute query:{:?}",e);
+            e
+        })?;
+    Ok(())
 }
