@@ -25,8 +25,8 @@ pub async fn subscribe(
     name: SubscriberName::parse(form.0.name).expect("Name validation failed")
 };
 
-    let subscriber_name= crate::domain::SubscriberName(form.name.clone());
-
+   // let subscriber_name= crate::domain::SubscriberName(form.name.clone());
+    let subscriber_name = crate::domain::SubscriberName(form.name.clone());
 
     if !is_valid_name(&form.name) {
         return HttpResponse::BadRequest().finish()
@@ -88,7 +88,10 @@ pub fn is_valid_name(s: &str) -> bool{
     !(is_empty_or_whitespace||is_too_long||contains_forbidden_characters)
 }
 
-#[tracing::instrument([...])]
+#[tracing::instrument(
+name="Saving new subscriber deatails in the database"
+skip(new_subscriber,pool)
+)]
 pub async fn insert_subscriber(
     pool: &PgPool,
     new_subscriber: &NewSubscriber,
