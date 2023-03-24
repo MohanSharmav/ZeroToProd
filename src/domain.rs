@@ -25,7 +25,7 @@ impl SubscriberName {
             .any(|g|forbidden_characters.contains(&g));
 
         if is_empty_or_whitespace|| is_too_long || contains_forbidden_characters{
-            Err(Error!("{} is not a valid subscriber name",s))
+            Err(format!("{} is not a valid subscriber name",s))
         }else{
            Ok(Self(s))
         }
