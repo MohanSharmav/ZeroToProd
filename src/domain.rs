@@ -1,3 +1,4 @@
+use tracing::log::Level::Error;
 use unicode_segmentation::UnicodeSegmentation;
 
 
@@ -24,7 +25,7 @@ impl SubscriberName {
             .any(|g|forbidden_characters.contains(&g));
 
         if is_empty_or_whitespace|| is_too_long || contains_forbidden_characters{
-            panic!("{} is not a valid subscriber name",s)
+            Err(Error!("{} is not a valid subscriber name",s))
         }else{
            Ok(Self(s))
         }
