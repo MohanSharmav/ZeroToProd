@@ -20,17 +20,28 @@ pub async fn subscribe(
     pool:web::Data<PgPool>,
 ) -> HttpResponse
 {
-    let new_subscriber= NewSubscriber{
-    email: form.0.email,
-    name: SubscriberName::parse(form.0.name).expect("Name validation failed")
-};
+    let name=match SubscriberName::parse(form.0.name)   {
+        Ok(name)=>name,
+        Err(_) => return HttpResponse::BadRequest().finish(),
+    };
+
+    let new_subscriber = NewSubscriber{
+        email: form.0.email,
+        name,
+    };
+
+
+//     let new_subscriber= NewSubscriber{
+//     email: form.0.email,
+//     name: SubscriberName::parse(form.0.name).expect("Name validation failed")
+// };
 
    // let subscriber_name= crate::domain::SubscriberName(form.name.clone());
-    let subscriber_name = crate::domain::SubscriberName(form.name.clone());
-
-    if !is_valid_name(&form.name) {
-        return HttpResponse::BadRequest().finish()
-    }
+   //  let subscriber_name = SubscriberName(form.name.clone());
+   //
+   //  if !is_valid_name(&form.name) {
+   //      return HttpResponse::BadRequest().finish()
+   //  }
 
     match insert_subscriber(&pool, &new_subscriber).await{
         Ok(_)=> HttpResponse::Ok().finish(),
@@ -115,8 +126,3 @@ pub async fn insert_subscriber(
     Ok(())
 }
 
-impl SubscriberName{
-    pub fn inner_ref(&self) ->&str{
-        &self.0
-    }
-}

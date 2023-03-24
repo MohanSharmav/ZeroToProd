@@ -1,17 +1,13 @@
-use tracing::log::Level::Error;
+use unicode_segmentation;
 use unicode_segmentation::UnicodeSegmentation;
-
-
-pub struct NewSubscriber{
-    pub email:String,
-    pub name: SubscriberName,
-}
-
 
 #[derive(Debug)]
 pub struct SubscriberName(pub(crate) String);
 
-impl SubscriberName {
+impl SubscriberName{
+    pub fn inner_ref(&self) ->&str{
+        &self.0
+    }
 
     pub fn parse(s: String) -> Result<SubscriberName,String> {
     let is_empty_or_whitespace =s.trim().is_empty();
@@ -33,12 +29,13 @@ impl SubscriberName {
     }
 }
 
+
+
 impl AsRef<str> for SubscriberName{
     fn as_ref(&self) -> &str {
         &self.0
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -52,15 +49,15 @@ mod tests {
     }
     #[test]
     fn a_name_longer_than_256_grapheme_is_rejected(){
-let name = "a".repeat(257);
+        let name = "a".repeat(257);
         assert_err!(SubscriberName::parse(name));
-}
+    }
 
-#[test]
+    #[test]
     fn whitespace_only_names_are_rejected(){
-    let  name= " ".to_string();
-    assert_err!(SubscriberName::parse(name));
-}
+        let  name= " ".to_string();
+        assert_err!(SubscriberName::parse(name));
+    }
 
     #[test]
     fn empty_string_is_rejected(){
