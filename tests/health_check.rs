@@ -106,6 +106,7 @@ async fn subscribe_returns_a_400_when_data_is_missing(){
      let email_client = EmailClient::new(
          configuration.email_client.base_url,
          sender_email,
+         configuration.email_client.authorization_token,
      );
 
      let server= run(listener,connection_pool.clone(),email_client)
