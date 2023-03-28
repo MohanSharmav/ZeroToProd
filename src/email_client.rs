@@ -27,7 +27,7 @@ impl EmailClient
         subject: &str,
         html_content: &str,
         text_content: &str
-    )-> Result<(),String>{
+    )-> Result<(),reqwest::Error>{
         let url= format!("{}/email",self.base_url);
 
         let request_body= SendEmailRequest{
@@ -43,7 +43,9 @@ impl EmailClient
             .post(&url).json(&request_body)
             .header("X-Postmark-Server-Token",self.authorization_token.expose_secret()
             )
-            .json(&request_body);
+            .json(&request_body)
+            .send()
+            .await?;
         Ok(())
     }
 
@@ -70,6 +72,7 @@ mod tests {
     use wiremock::{Mock, MockServer, ResponseTemplate};
     use wiremock::matchers::any;
     use crate::domain::SubscriberEmail;
+    use fake::faker::lorem::en::{Paragraph, Sentence};
 //todo
     #[tokio::test]
     async fn send_email_fires_a_request_to_base_url()
@@ -79,7 +82,8 @@ mod tests {
         let email_client = SubscriberEmail::new
             (mock_server.uri(),
              sender,
-            Secret::new(Faker.fake()));
+            Secret::new(Faker.fake())
+            );
 
         Mock::given(any())
             .respond_with(ResponseTemplate::new(200))
@@ -88,8 +92,8 @@ mod tests {
             .await;
 
         let subscriber_email = SubscriberEmail::parse(SafeEmail().fake()).unwrap();
-        let subject: String = Sentence(1..2).fake();
-        let content: String = Paragraph(1..2).fake();
+        let subject: String = Sentence(1 ..2).fake();
+        let content: String = Paragraph(1 .. 10).fake();
 
         let _=email_client
             .send_email(subscriber_email, &subject, &content, &content)
