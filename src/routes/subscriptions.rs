@@ -156,4 +156,5 @@ impl SubscriberName {
         // That's because `inner` takes `self` by value,
         // consuming it according to move semantics
         self.0
-    } }
+    }
+}

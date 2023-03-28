@@ -1,12 +1,26 @@
 use serde_aux::field_attributes::deserialize_number_from_string;
 use sqlx::ConnectOptions;
 use sqlx::postgres::{PgConnectOptions, PgSslMode};
+use crate::domain::SubscriberEmail;
 
 #[derive(serde::Deserialize)]
 pub struct Settings{
     pub database: DatabaseSettings,
     pub application: ApplicationSettings,
+    pub email_client: EmailClientSettings,
 }
+
+#[derive(serde::Deserialize)]
+pub struct EmailClientSettings {
+    pub base_url: String,
+    pub sender_email: String,
+}
+
+impl EmailClientSettings {
+    pub fn sender(&self) -> Result<SubscriberEmail, String> {
+        SubscriberEmail::parse(self.sender_email.clone())
+    }
+
 
 #[derive(serde::Deserialize)]
 pub struct DatabaseSettings{
@@ -55,12 +69,7 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
     settings.try_deserialize::<Settings>()
 }
 
-    //
-    // let settings = config::Config::builder()
-    //     .add_source(config::File::new("configuration.yaml",config::FileFormat::Yaml))
-    //     .build()?;
-    // settings.try_deserialize::<Settings>()
-// }
+
 
 pub enum Environment{
     Local,
@@ -89,23 +98,7 @@ impl TryFrom<String> for Environment {
     }
     }
 }
-//
-// impl TryFrom<String> for Environment {
-// type Error =String ;
-//
-// fn try_from(s: String) -> Result<Self,Self::Error>{
-//     match s.to_lowercase().as_str(){
-//         "local" => Ok(Self::Local),
-//         "production" => Ok(Self::Production),
-//         other => Err(format!(
-//             "{} is not supported environment .\
-//             use either 'local' or 'production'",other
-//         )),
-//
-//             )
-//     }
-// }
-// }
+
 
 impl DatabaseSettings{
     pub fn without_db(&self) -> PgConnectOptions {
