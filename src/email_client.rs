@@ -58,9 +58,10 @@ impl EmailClient
 mod tests {
     use actix_web::middleware::ErrorHandlerResponse::Response;
     use config::ValueKind::String;
-    use fake::Fake;
+    use fake::{Fake, Faker};
     use fake::faker::internet::raw::SafeEmail;
     use fake::faker::lorem::raw::{Paragraph, Sentence};
+    use secrecy::Secret;
     use wiremock::{Mock, MockServer, ResponseTemplate};
     use wiremock::matchers::any;
     use crate::domain::SubscriberEmail;
@@ -70,7 +71,10 @@ mod tests {
     {
         let mock_server= MockServer::start().await;
         let sender= SubscriberEmail::parse(SafeEmail().fake()).unwrap();
-        let email_client = SubscriberEmail::new(mock_server.uri(),sender);
+        let email_client = SubscriberEmail::new
+            (mock_server.uri(),
+             sender,
+            Secret::new(Faker.fake()));
 
         Mock::given(any())
             .respond_with(ResponseTemplate::new(200))
