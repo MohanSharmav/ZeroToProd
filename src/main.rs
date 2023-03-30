@@ -4,6 +4,7 @@ use tracing_log::LogTracer;
 use ZeroToProd::startup::run;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::net::TcpListener;
+use tokio::time::timeout;
 //use env_logger::Env;
 use ZeroToProd::telemetry::{get_subscriber, init_subscriber};
 use tracing::Subscriber;
@@ -35,13 +36,17 @@ async fn main() -> Result<(), std::io::Error> {
         .acquire_timeout(std::time::Duration::from_secs(2))
         .connect_lazy_with(configuration.database.with_db());
 
-    let sender_email= configuration.email_client.sender()
+    let sender_email= configuration
+        .email_client.sender()
         .expect("invalid sender email address");
+
+    let timeout = configuration.email_client.timeout();
 
     let email_client = EmailClient::new(
         configuration.email_client.base_url,
         sender_email,
         configuration.email_client.authorization_token,
+        timeout
     );
 
     let address = format!(
