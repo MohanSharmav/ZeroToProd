@@ -22,15 +22,18 @@ async fn greet(req: HttpRequest) -> impl Responder {
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-
     let subscriber = get_subscriber(
-        "ZeroToProd".into(),"info".into(),std::io::stdout
+        "ZeroToProd".into(), "info".into(), std::io::stdout
     );
     init_subscriber(subscriber);
 
 
-
     let configuration = get_configuration().expect("Failed to read configuration.");
+
+    let server = build(configuration).await?;
+    server.await?;
+
+
 
     let connection_pool= PgPoolOptions::new()
         .acquire_timeout(std::time::Duration::from_secs(2))
@@ -56,6 +59,8 @@ async fn main() -> Result<(), std::io::Error> {
 
     run(listener,connection_pool,email_client)?.await?;
     Ok(())//await, connection_pool
+
+
 }
 
 

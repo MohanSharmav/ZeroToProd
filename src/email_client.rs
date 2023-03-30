@@ -79,6 +79,7 @@ impl EmailClient
 
     pub fn new(base_url: String,
                sender: SubscriberEmail,
+    authorization_token:Secret<String>,
     timeout: std::time::Duration) ->Self
     {
 
