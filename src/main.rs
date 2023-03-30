@@ -1,7 +1,7 @@
 use actix_web::{web, App, HttpRequest, HttpServer, Responder, HttpResponse};
 //use ZeroToProd::run;
 use tracing_log::LogTracer;
-use ZeroToProd::startup::run;
+use ZeroToProd::startup::{Application, run};
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::net::TcpListener;
 use tokio::time::timeout;
@@ -13,7 +13,7 @@ use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
 use ZeroToProd::configuration::{get_configuration, Settings};
 use ZeroToProd::email_client::EmailClient;
-
+use zero2prod::startup::Application;
 //
 async fn greet(req: HttpRequest) -> impl Responder {
     let name = req.match_info().get("name").unwrap_or("World");
@@ -21,7 +21,9 @@ async fn greet(req: HttpRequest) -> impl Responder {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), std::io::Error> {
+async fn main() -> Result<(), std::io::Error>
+{
+
     let subscriber = get_subscriber(
         "ZeroToProd".into(), "info".into(), std::io::stdout
     );
@@ -57,8 +59,11 @@ async fn main() -> Result<(), std::io::Error> {
         configuration.application.host,configuration.application.port);
     let listener = TcpListener::bind(address)?;//TcpListener
 
+    let application= Application::build(configuration).await?;
+    application.run_until_stopped().await?;
+
     run(listener,connection_pool,email_client)?.await?;
-    Ok(())//await, connection_pool
+    Ok(())
 
 
 }
