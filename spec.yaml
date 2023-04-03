@@ -53,7 +53,9 @@ services:
     - key: APP_DATABASE__DATABASE_NAME
       scope: RUN_TIME
       value: ${mohan.DATABASE}
-
+    - key: APP_APPLICATION_BASE_URL
+      scope: RUN_TIME
+      value: ${APP_URL}
 databases:
       # PG = Postgres
  - engine: PG

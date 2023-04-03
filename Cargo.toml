@@ -26,7 +26,7 @@ tracing-log = "0.1"
 tracing-actix-web = "0.7"
 serde-aux = "4"
 unicode-segmentation = "1"
-
+rand = { version = "0.8", features=["std_rng"] }
 
 
 [dev-dependencies]
