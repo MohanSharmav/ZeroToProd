@@ -6,7 +6,7 @@ use ZeroToProd::email_client::EmailClient;
 use ZeroToProd::startup::{Application, build, get_connection_pool, run};
 use std::net::TcpListener;
 use uuid::Uuid;
-use wiremock::{Mock, MockServer};
+use wiremock::{Mock, MockServer, Request};
 
 static TRACING: Lazy<()> = Lazy::new(|| {
     let subscriber = get_subscriber("test".into(), "debug".into(),std::io::stdout);
@@ -28,10 +28,11 @@ pub struct TestApp{
 
 impl TestApp {
 
-    pub fn get_confirmation_links(&self) ->email_request: &wiremock::Request ) -> ConfirmationLinks {
-    let body: serde_json::Value = serde_json::from_slice( &email_request.body
-    ).unwrap();
-    let get_link = |s: &str| {
+    pub fn get_confirmation_links(&self, x: &&Request) ->email_request: &wiremock::Request )
+    -> ConfirmationLinks {
+    let body: serde_json::Value = serde_json::from_slice( &email_request.body).unwrap();
+    let get_link = |s: &str|
+    {
     let links: Vec<_> = linkify::LinkFinder::new()
     .links(s)
     .filter(|l| *l.kind() == linkify::LinkKind::Url) .collect();
@@ -45,7 +46,18 @@ impl TestApp {
     ConfirmationLinks {
     html,
     plain_text
-    } }
+    }
+
+
+    pub async post_newsletters(&self,
+    body: serde_json::Value)-> reqwest::Response{
+    reqwest::Client::new()
+    .post(&format!("{}/newsletters", self.address))
+    .json(&body)
+    .send()
+    .await
+    .expect("failed to execute request")
+    }
 }
 
 

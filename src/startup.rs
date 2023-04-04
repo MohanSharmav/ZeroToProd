@@ -8,6 +8,7 @@ use sqlx::postgres::PgPoolOptions;
 use tracing_actix_web::TracingLogger;
 use tracing_subscriber::fmt::time;
 use crate::configuration::{DatabaseSettings, Settings};
+use crate::domain::publish_newsletter;
 use crate::email_client::EmailClient;
 use crate::routes::{health_check, subscribe};
 
@@ -74,6 +75,7 @@ impl Application
                 .route("/health_check", web::get().to(health_check))
                 .route("/subscriptions", web::post().to(subscribe))
                 .route("/subscriptions/confirm", web::get().to(confirm))
+                .route("/newsletters", web::post().to(publish_newsletter))
                 .app_data(db_pool.clone())
                 .app_data(email_client.clone())
                 .app_data(base_url.clone())
