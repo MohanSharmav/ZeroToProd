@@ -1,3 +1,4 @@
+use secrecy::Secret;
 use serde_aux::field_attributes::deserialize_number_from_string;
 use sqlx::ConnectOptions;
 use sqlx::postgres::{PgConnectOptions, PgSslMode};
@@ -47,6 +48,7 @@ pub struct ApplicationSettings{
     pub port:u16,
     pub host: String,
     pub base_url: String,
+    pub hmac_secret: Secret<String>,
 }
 
 pub fn get_configuration() -> Result<Settings, config::ConfigError> {

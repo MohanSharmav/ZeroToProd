@@ -4,13 +4,14 @@ use sqlx::{PgConnection, PgPool};
 use actix_web::{App, HttpServer, web};
 use actix_web::middleware::Logger;
 use actix_web::web::Data;
+use secrecy::Secret;
 use sqlx::postgres::PgPoolOptions;
 use tracing_actix_web::TracingLogger;
 use tracing_subscriber::fmt::time;
 use crate::configuration::{DatabaseSettings, Settings};
 use crate::domain::publish_newsletter;
 use crate::email_client::EmailClient;
-use crate::routes::{health_check, subscribe};
+use crate::routes::{health_check, home, subscribe};
 
 
 pub struct Application{
@@ -18,6 +19,10 @@ pub struct Application{
     server: Server,
 }
 pub struct ApplicationBaseUrl(pub String);
+
+
+#[derive(Clone)]
+pub struct HmacSecret(pub Secret<String>);
 
 impl Application
 {
@@ -42,6 +47,7 @@ impl Application
         let server = run(
             listener, connection_pool, email_client,
             configuration.application.base_url,
+            configuration.application.hmac_secret
         )?;
 
         Ok(Self { port, server })
@@ -63,6 +69,7 @@ impl Application
         db_pool: PgPool,
         email_client: EmailClient,
         base_url: String,
+        hmac_secret: Secret<String>
     )
         -> Result<Server, std::io::Error>
     {
@@ -71,6 +78,7 @@ impl Application
         let email_client = Data::new(email_client);
         let server = HttpServer::new(move || {
             App::new()
+                .route("/login", web::post().to(login))                .route("/",web::get().to(home())
                 .wrap(TracingLogger::default())
                 .route("/health_check", web::get().to(health_check))
                 .route("/subscriptions", web::post().to(subscribe))
@@ -79,6 +87,7 @@ impl Application
                 .app_data(db_pool.clone())
                 .app_data(email_client.clone())
                 .app_data(base_url.clone())
+                .app_data(Data::new(hmac_secret.clone())))
         })
             .listen(listener)?
             .run();
@@ -94,5 +103,6 @@ pub fn get_connection_pool(
 {
     PgPoolOptions::new()
         .acquire_timeout(std::time::Duration::from_secs(2))
-                             .connect_lazy_with(configuration.with_db())
+
+        .connect_lazy_with(configuration.with_db())
 }
