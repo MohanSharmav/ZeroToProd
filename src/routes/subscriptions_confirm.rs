@@ -1,43 +1,79 @@
-use actix_web::{HttpResponse, web};
-use reqwest::Url;
-use wiremock::{ResponseTemplate, Mock};
-use wiremock::matchers::{path, method};
+use actix_web::{web, HttpResponse};
+use sqlx::{PgPool, Postgres, Transaction};
+use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
 pub struct Parameters {
-    subscription_token: String
-}
-#[tracing::instrument(
-name = "Confirm a pending subscriber", skip(_parameters)
-)]
-pub async fn confirm(_parameters: web::Query<Parameters>) -> HttpResponse
-{
-    HttpResponse::Ok().finish()
+    subscription_token: String,
 }
 
-
-#[tokio::test]
-async fn the_link_returned_by_subscribe_returns_a_200_if_called() {
-// Arrange
-    let app = spawn_app().await;
-    let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
-    Mock::given(path("/email")) .and(method("POST")) .respond_with(ResponseTemplate::new(200)) .mount(&app.email_server)
-        .await;
-    app.post_subscriptions(body.into()).await;
-    let email_request = &app.email_server.received_requests().await.unwrap()[0]; let body: serde_json::Value = serde_json::from_slice(&email_request.body)
-        .unwrap();
-    // Extract the link from one of the request fields.
-    let get_link = |s: &str| {
-        let links: Vec<_> = linkify::LinkFinder::new() .links(s)
-            .filter(|l| *l.kind() == linkify::LinkKind::Url)
-            .collect(); assert_eq!(links.len(), 1); links[0].as_str().to_owned()
+#[tracing::instrument(name = "Confirm a pending subscriber", skip(parameters, pool))]
+pub async fn confirm(parameters: web::Query<Parameters>, pool: web::Data<PgPool>) -> HttpResponse {
+    let mut transaction = match pool.begin().await {
+        Ok(transaction) => transaction,
+        Err(_) => return HttpResponse::InternalServerError().finish(),
     };
-    let raw_confirmation_link = &get_link(&body["HtmlBody"].as_str().unwrap()); let confirmation_link = Url::parse(raw_confirmation_link).unwrap();
-// Let's make sure we don't call random APIs on the web
-assert_eq!(confirmation_link.host_str().unwrap(), "127.0.0.1");
-// Act
-    let response = reqwest::get(confirmation_link) .await
-        .unwrap();
-// Assert
-    assert_eq!(response.status().as_u16(), 200);
+    let id = match get_subscriber_id_from_token(&mut transaction, &parameters.subscription_token)
+        .await
+    {
+        Ok(id) => id,
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+    };
+    match id {
+        None => HttpResponse::Unauthorized().finish(),
+        Some(subscriber_id) => {
+            if confirm_subscriber(&mut transaction, subscriber_id)
+                .await
+                .is_err()
+            {
+                return HttpResponse::InternalServerError().finish();
+            }
+            if transaction.commit().await.is_err() {
+                return HttpResponse::InternalServerError().finish();
+            }
+            HttpResponse::Ok().finish()
+        }
+    }
+}
+
+#[tracing::instrument(
+    name = "Mark subscriber as confirmed",
+    skip(subscriber_id, transaction)
+)]
+pub async fn confirm_subscriber(
+    transaction: &mut Transaction<'_, Postgres>,
+    subscriber_id: Uuid,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"UPDATE subscriptions SET status = 'confirmed' WHERE id = $1"#,
+        subscriber_id
+    )
+    .execute(transaction)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to execute query: {:?}", e);
+        e
+    })?;
+    Ok(())
+}
+
+#[tracing::instrument(
+    name = "Get subscriber_id from token",
+    skip(subscription_token, transaction)
+)]
+pub async fn get_subscriber_id_from_token(
+    transaction: &mut Transaction<'_, Postgres>,
+    subscription_token: &str,
+) -> Result<Option<Uuid>, sqlx::Error> {
+    let result = sqlx::query!(
+        r#"SELECT subscriber_id FROM subscription_tokens WHERE subscription_token = $1"#,
+        subscription_token,
+    )
+    .fetch_optional(transaction)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to execute query: {:?}", e);
+        e
+    })?;
+    Ok(result.map(|r| r.subscriber_id))
 }

@@ -1,10 +1,8 @@
-mod helpers;
+mod admin_dashboard;
+mod change_password;
 mod health_check;
-mod subscriptions;
-mod subscriptions_confirm;
+mod helpers;
 mod login;
 mod newsletter;
-pub
-use health_check::*;
-pub use subscriptions::*;
-pub use subscriptions_confirm::*;
+mod subscriptions;
+mod subscriptions_confirm;

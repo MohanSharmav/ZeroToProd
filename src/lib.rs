@@ -1,37 +1,11 @@
+pub mod authentication;
 pub mod configuration;
-pub mod routes;
-pub mod startup;
-pub mod telemetry;
 pub mod domain;
 pub mod email_client;
-pub mod authentication;
-// pub trait Log: Sync + Send {
-//     fn enabled(&self,metadata:&Metadata) -> bool;
-//     //fn log(&self, record: &Record);
-//     fn flush(&self);
-// }
-
-// async fn health_check() -> HttpResponse {
-//     HttpResponse::Ok().finish()
-// }
-
-// #[derive(serde::Deserialize)]
-// struct FormData {
-//     email: String,
-//     name: String
-// }
-
-// async fn subscribe(_form: web::Form<FormData>) -> HttpResponse{
-//     HttpResponse::Ok().finish()
-// }
-
-// pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
-//     let server = HttpServer::new(|| {
-//         App::new()
-//             .route("/health_check", web::get().to(health_check))
-//             .route("/subscriptions", web::post().to(subscribe))
-//     })
-//         .listen(listener)?
-//             .run();
-//         Ok(server)
-// }
+pub mod idempotency;
+pub mod issue_delivery_worker;
+pub mod routes;
+pub mod session_state;
+pub mod startup;
+pub mod telemetry;
+pub mod utils;
